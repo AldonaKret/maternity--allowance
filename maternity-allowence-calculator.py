@@ -4,7 +4,7 @@ from dateutil.relativedelta import relativedelta
 import ttkbootstrap as ttk
 from ttkbootstrap.widgets import DateEntry, Floodgauge, Meter
 from tkinter import messagebox
-import re
+
 
 
 class App:
@@ -26,8 +26,10 @@ class App:
         self.sum_of_value_dues = 1
         self.average_dues = 1
         self.base = 0
-        self.sickness_allowence = 0
-        self.maternity_allowence = 0
+        self.sickness_allowance = 0
+        self.maternity_allowance =   0
+        self.label_3 = None
+        self.label_4 = None
 
     def determine_window(self):
         self.window = tk.Tk()
@@ -59,23 +61,19 @@ class App:
         self.calendar_2.grid(row=3, column=0, padx=5, pady=5)
         return self.calendar_2
 
-     # def determine_birthday(self):
-    #     self.birth_date = self.calendar.entry.get()
-    #     self.birth_date = datetime.strptime(self.birth_date, '%d.%m.%Y').date()
-    #     return self.birth_date
     def determine_rest_date(self):
-        rest_date_str = self.calendar_2.entry.get()  # Pobierz datę odpoczynku
+        rest_date_str = self.calendar_2.entry.get()
         self.rest_date = datetime.strptime(rest_date_str, '%d.%m.%Y').date()
         return self.rest_date
 
     def determine_birthday(self):
-        birth_date_str = self.calendar.entry.get()  # Pobierz łańcuch tekstowy daty narodzin
-        self.birth_date = datetime.strptime(birth_date_str, '%d.%m.%Y').date()  # Konwertuj na obiekt daty
+        birth_date_str = self.calendar.entry.get()
+        self.birth_date = datetime.strptime(birth_date_str, '%d.%m.%Y').date()
         return self.birth_date
 
 
     def first_button(self):
-        self.button_1 = tk.Button(self.window, text="ile wrzuciłaś do systemu przez ostatni rok?", command=self.make_table)
+        self.button_1 = tk.Button(self.window, text="ile wrzucasz do systemu?", command=self.make_table)
         self.button_1.grid(row=4, column=0, padx=5, pady=5)
         return self.button_1
 
@@ -87,30 +85,29 @@ class App:
 
     def make_table(self):
         self.dates_of_due = []
-        first_date = self.determine_rest_date()  # Pobierz wartość self.rest_date z determine_rest_date()
+        first_date = self.determine_rest_date()
         for i in range(12):
             self.dates_of_due.append(first_date)
-            date_label = tk.Label(self.table_frame, text=first_date.strftime('%d.%m.%Y'))
+            date_label = tk.Label(self.table_frame, text=first_date.strftime('20.%m.%Y'))
             date_label.grid(row=i, column=0, padx=5, pady=5)
-            first_date += relativedelta(months=-1)  # Zaktualizuj wartość first_dat
-
+            first_date += relativedelta(months=-1)
         self.data_entries = []
         for i in range(12):
-            data_entry = tk.Entry(self.table_frame, validate='key')
+            data_entry = tk.Entry(self.table_frame)
             data_entry.grid(row=i, column=1, padx=5, pady=5)
-            data_entry.configure(validatecommand=(self.table_frame.register(self.validate_float), '%P'))
             self.data_entries.append(data_entry)
         print(self.data_entries)
 
-        # self.zipped_table = list(zip(self.dates_of_due, self.data_entries))
         return self.dates_of_due, self.data_entries
 
     def validate_float(self, input_value):
+
+
         try:
-            float(input_value)
+            input_value = float(input_value)
             return True
         except ValueError:
-            messagebox.showerror("Błąd", "Wprowadź poprawną wartość liczbową.")
+            messagebox.showerror("Błąd", "Wprowadź poprawną wartość liczbową, nie większą niż 5910.18zł")
             return False
 
     def calculate_amount_of_rest_days(self):
@@ -124,18 +121,19 @@ class App:
         self.sum_of_value_dues = 0
         for date_of_paying, entry in zip(self.dates_of_due, self.data_entries):
             entry_value = entry.get()
+            entry_value = entry_value.replace(",", ".")
+            entry_value = entry_value.replace(" ","")
+            if entry_value == "":
+                entry_value = 0
+            if float(entry_value) >= 5910.18:
+                messagebox.showerror("Błąd", "jednorazowa wpłata nie może być większa niż 5910.18zł")
             if entry_value and self.validate_float(entry_value):
-                try:
-                    entry_value = float(entry_value)
-                    date_of_paying = datetime.combine(date_of_paying, time())  # Konwertuj date_of_paying na datetime
-                    print("Date:", date_of_paying)
-                    print("Entry value:", entry_value)
-                    if date_of_paying >= border_date and entry_value >= border_value:
-                        self.sum_of_value_dues += entry_value
-                    elif date_of_paying < border_date and entry_value >= border_value_2022:
-                        self.sum_of_value_dues += entry_value
-                except ValueError:
-                    messagebox.showerror("Błąd", "Wprowadź poprawną wartość liczbową.")
+                entry_value = float(entry_value)
+                date_of_paying = datetime.combine(date_of_paying, time())  # Konwertuj date_of_paying na datetime
+                if date_of_paying >= border_date and entry_value >= border_value:
+                    self.sum_of_value_dues += entry_value
+                elif date_of_paying < border_date and entry_value >= border_value_2022:
+                    self.sum_of_value_dues += entry_value
         return self.sum_of_value_dues
 
     def calculate_average_dues(self):
@@ -145,53 +143,53 @@ class App:
         self.base = 0.8629 * round(self.average_dues / 0.3409)
         return self.base
 
-    def calculate_sickness_allowence(self):
-        self.sickness_allowence = round((self.base/30) * self.amount_of_rest_days, 2)
-        return self.sickness_allowence
+    def calculate_sickness_allowance(self):
+        self.sickness_allowance = round((self.base/30) * self.amount_of_rest_days, 2)
+        return self.sickness_allowance
 
-    def calculate_maternity_allowence(self):
+    def calculate_maternity_allowance(self):
         if self.average_dues != 0:
-            self.maternity_allowence = round(0.88 * self.base, 2)
+            self.maternity_allowance = round(0.88 * self.base, 2)
         else:
-            self.maternity_allowence = 1000
-        return self.maternity_allowence
-
+            self.maternity_allowance = 1000
+        return self.maternity_allowance
 
     def third_label(self):
-        if all(entry.get() for entry in self.data_entries):
-            self.determine_rest_date()  # Wywołaj tę metodę
-            self.determine_birthday()  # Wywołaj tę metodę
-            self.calculate_sum_of_value_dues()
-            self.calculate_average_dues()
-            self.calculate_base()
-            self.calculate_sickness_allowence()
-            self.calculate_maternity_allowence()
+        self.determine_rest_date()
+        self.determine_birthday()
+        self.calculate_sum_of_value_dues()
+        self.calculate_average_dues()
+        self.calculate_base()
+        self.calculate_sickness_allowance()
+        self.calculate_maternity_allowance()
+        self.amount_of_rest_days = self.calculate_amount_of_rest_days()
 
-            self.amount_of_rest_days = self.calculate_amount_of_rest_days()  # Oblicz liczbę dni odpoczynku
-
-            self.label_3 = tk.Label(self.window, text=f"""
-            będziesz na L4 przez {self.amount_of_rest_days}
-            i otrzymasz przez cały ten czas {self.calculate_sickness_allowence()}
-
-            będziesz na urlopie macierzyńskim od dnia {self.birth_date}
-            """)
+        # Sprawdzenie, czy etykieta Label3 została już utworzona
+        if self.label_3 is None:
+            self.label_3 = tk.Label(self.window, text="")
             self.label_3.grid(row=18, column=0, padx=5, pady=5)
 
-            if self.maternity_allowence == 1000:
-                text = 'otrzymasz co miesiąc netto 1000zł'
-            if self.maternity_allowence != 1000:
-                text = f'''jeżeli wybierzesz opcję równych wypłat przez cały rok czyli 81,5% podstawy,
-                        to otrzymasz co miesiąc netto {round(0.815 * self.maternity_allowence, 2)},
-                        jeżeli wybierzesz opcję zmiennych wypłat czyli 100% podstawy przez 20 tygodni i 70% przez 32 tygodnie,
-                        to otrzymasz miesięcznie netto odpowiednio {self.maternity_allowence} lub {round(0.7 * self.maternity_allowence, 2)}'''
+        # Aktualizacja treści Label3
+        self.label_3.config(text=f"będziesz na L4 przez {self.amount_of_rest_days} dni\n"
+                                 f"i otrzymasz przez cały ten czas {self.calculate_sickness_allowance()} zł\n\n"
+                                 f"będziesz na urlopie macierzyńskim od dnia {self.birth_date}")
 
-            self.label_4 = tk.Label(self.window, text = text)
+        if self.maternity_allowance == 1000:
+            text = 'otrzymasz co miesiąc netto 1000 zł'
+        else:
+            text = f'''jeżeli wybierzesz opcję równych wypłat przez cały rok czyli 81,5% podstawy,
+                        to otrzymasz co miesiąc netto {round(0.815 * self.maternity_allowance, 2)} zł,
+                        jeżeli wybierzesz opcję zmiennych wypłat czyli 100% podstawy przez 20 tygodni i 70% przez 32 tygodnie,
+                        to otrzymasz miesięcznie netto odpowiednio {self.maternity_allowance} zł lub {round(0.7 * self.maternity_allowance, 2)} zł'''
+
+        # Sprawdzenie, czy etykieta Label4 została już utworzona
+        if self.label_4 is None:
+            self.label_4 = tk.Label(self.window, text="")
             self.label_4.grid(row=19, column=0, padx=5, pady=5)
 
+        # Aktualizacja treści Label4
+        self.label_4.config(text=text)
 
-
-        else:
-            messagebox.showerror("Błąd", "Wprowadź wszystkie wymagane wartości.")
 
 
 
@@ -212,47 +210,13 @@ def main():
     app.calculate_sum_of_value_dues()
     app.calculate_average_dues()
     app.calculate_base()
-    app.calculate_sickness_allowence()
-    app.calculate_maternity_allowence()
-    app.third_label()
-    print("Length of dates_of_due:", len(app.dates_of_due))
-    print("Length of data_entries:", len(app.data_entries))
-    print("Dates of due:", app.dates_of_due)
-    print("Data entries:", app.data_entries)
+    app.calculate_sickness_allowance()
+    app.calculate_maternity_allowance()
     app.window.mainloop()
 
 if __name__ == "__main__":
     main()
 
-# window_2 = tk.Tk()
-# window_2.title("ile wrzuciłaś do systemu?")
-
-# user_input_2 = get_selected_date(calendar_2)  # Pobierz wartość wpisaną przez użytkownika
-
-# date_object = datetime.strptime(user_input_2, "%d.%m.%Y")
-
-# table_frame = tk.Frame(window_2)
-# table_frame.pack()
-
-
-
-# # dodanie walidatora
-# validate_command = master.register(validate_entry)
-# data_entry.config(validate="key", validatecommand=(validate_command, '%P'))
-
-#         # przycisk do obliczania sumy
-# sum_button = tk.Button(window_2, text="Oblicz sumę", command=calculate_sum)
-# sum_button.pack()
-
-# #             # dodanie walidatora
-# #             validate_command = self.master.register(self.validate_entry)
-# #             data_entry.config(validate="key", validatecommand=(validate_command, '%P'))
-
-# button_2 = tk.Button(window_2, text="oblicz zasiłek macierzyński")
-# button_2.pack()
-
-# def calculate_clicked_window:
-#     messagebox.showinfo("i co dasz radę?", f"na L4 otrzymasz łącznie {}zł netto,\n zostanie odprowadzony podatek pit wsysokości {}, \n na macierzyńskim otrzymasz {}zł miesięcznie netto, \n co miesiąc zostanie odprowadzony podatek pit wsysokości {}")
 
 
 
