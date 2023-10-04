@@ -27,7 +27,7 @@ Cztery lata temu przed zajściem w ciąże i mając jednoosobową działalność
 
 Wyliczenie zasiłki jest wykonane zgodnie z poniższym schematem
 
-![algorytm](Assets\Algorithm-Maternity-Allowence.jpg)
+![algorytm](Assets/Algorithm-Maternity-Allowence.jpg)
 
 
 ## Technologies Used | Użyte technologie
